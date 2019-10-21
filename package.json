@@ -14,8 +14,8 @@
   },
   "scripts": {
     "docs": "typedoc src/",
-    "build": "tsc",
-    "test": "jest --config jestconfig.json",
+    "build": "tsc --build tsconfig.json",
+    "test": "tsc && jest --config jestconfig.json",
     "prepare": "npm run build",
     "prepublishOnly": "npm test"
   },
