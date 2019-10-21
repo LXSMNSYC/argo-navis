@@ -1,0 +1,12 @@
+  
+language: node_js
+node_js:
+  - "11"
+script:
+  - nyc yarn test
+  - nyc report --reporter=text-lcov > coverage.lcov
+  - codecov
+cache:
+  yarn: true
+  directories:
+    - node_modules
