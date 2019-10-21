@@ -1,0 +1,30 @@
+{
+  "devDependencies": {
+    "@types/jest": "^24.0.19",
+    "@types/node": "^12.11.1",
+    "codecov": "^3.6.1",
+    "jest": "^24.9.0",
+    "prettier": "^1.18.2",
+    "ts-jest": "^24.1.0",
+    "tslint": "^5.20.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "typedoc": "^0.15.0",
+    "typescript": "^3.6.4"
+  },
+  "scripts": {
+    "docs": "typedoc src/",
+    "build": "tsc",
+    "test": "jest --config jestconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test"
+  },
+  "name": "argo-navis",
+  "version": "0.1.0",
+  "description": "a simple Node HTTP framework",
+  "main": "index.js",
+  "repository": "https://github.com/LXSMNSYC/argo-navis.git",
+  "author": "Alexis Munsayac <alexis.munsayac@gmail.com>",
+  "license": "MIT",
+  "private": false
+}
