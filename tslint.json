@@ -65,8 +65,6 @@
 
     "invalid-void": true,
 
-    "no-default-export": true,
-
     "no-duplicate-imports": true,
 
     "no-require-imports": true,
