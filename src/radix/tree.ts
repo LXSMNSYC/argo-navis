@@ -177,7 +177,10 @@ function innerFind<T>(
   node: RadixNode<T>,
   first: boolean = false,
 ) {
-  if (first && (path.length === node.key.length && path === node.key) && node.payload) {
+  const pl = path.length;
+  const kl = node.key.length;
+
+  if (first && (pl === kl && path === node.key) && node.payload) {
     result.use(node);
 
     return;
@@ -199,7 +202,11 @@ function innerFind<T>(
         const keySize = detectParamSize(kr);
         const pathSize = detectParamSize(pr);
 
-        result.params[node.key.slice(kr.pos + 1, keySize - 1)] = path.slice(pr.pos, pathSize);
+        const keyPos = kr.pos + 1;
+        const name = node.key.slice(keyPos, keyPos + keySize - 1);
+        const value = path.slice(pr.pos, pr.pos + pathSize);
+
+        result.params[name] = value;
 
         kr.pos += keySize;
         pr.pos += pathSize;
@@ -212,19 +219,14 @@ function innerFind<T>(
     }
   }
 
-  if (!(pr.hasNext || kr.hasNext)) {
-    if (node.payload) {
-      result.use(node);
+  if (!(pr.hasNext || kr.hasNext) && node.payload) {
+    result.use(node);
 
-      return;
-    }
+    return;
   }
 
   if (pr.hasNext) {
-    if (kr.size > 0
-      && (pr.pos + 1 === pr.size)
-      && (pr.current === '/')
-    ) {
+    if (kl > 0 && (pr.pos + 1 === pl) && (pr.current === '/')) {
       result.use(node);
 
       return;
@@ -246,13 +248,13 @@ function innerFind<T>(
   }
 
   if (kr.hasNext) {
-    if (kr.pos + 1 === kr.size && kr.current === '/') {
+    if (kr.pos + 1 === kl && kr.current === '/') {
       result.use(node);
 
       return;
     }
 
-    if (kr.pos < kr.size && (
+    if (kr.pos < kl && (
       (kr.current === '/' && kr.peekNext === '*') || kr.current === '*'
     )) {
       if (kr.current !== '*') {
