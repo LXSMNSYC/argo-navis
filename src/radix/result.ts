@@ -29,22 +29,18 @@ import RadixNode from './node';
 
 import { Optional } from '../utils/optional';
 
-export interface IRadixResultParams {
-  [key: string]: string,
-}
-
 export default class RadixResult<T> {
   private nodes: Array<RadixNode<T>>;
   private nodeKey?: string;
-  private nodeParams: IRadixResultParams;
+  private nodeParams: Map<string, string>;
   private nodePayload?: T;
 
   constructor() {
     this.nodes = [];
-    this.nodeParams = {};
+    this.nodeParams = new Map<string, string>();
   }
 
-  public get params(): IRadixResultParams {
+  public get params(): Map<string, string> {
     return this.nodeParams;
   }
 
