@@ -3,8 +3,8 @@ language: node_js
 node_js:
   - "11"
 script:
-  - nyc yarn test
-  - nyc report --reporter=text-lcov > coverage.lcov
+  - yarn nyc:test
+  - yarn nyc:lcov
   - codecov
 cache:
   yarn: true
