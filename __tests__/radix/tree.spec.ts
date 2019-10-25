@@ -1,6 +1,10 @@
-import DuplicateError from '../../src/radix/exceptions/duplicate-error';
 import RadixNode from '../../src/radix/node';
 import RadixTree from '../../src/radix/tree';
+
+/**
+ * Errors
+ */
+import DuplicateError from '../../src/radix/exceptions/duplicate-error';
 import SharedKeyError from '../../src/radix/exceptions/shared-key-error';
 
 describe('RadixTree', () => {
@@ -314,7 +318,8 @@ describe('RadixTree', () => {
         expect(result.found).toEqual(true);
         expect(result.key).toEqual('/*all');
         expect(result.payload).toEqual('all');
-        expect(result.params.all).toEqual('a/bc');
+        expect(result.params.has('all')).toEqual(true);
+        expect(result.params.get('all')).toEqual('a/bc');
       });
 
       test('returns optional catch all', () => {
@@ -325,7 +330,153 @@ describe('RadixTree', () => {
         const result = tree.find('/a');
         expect(result.found).toEqual(true);
         expect(result.key).toEqual('/a/*b');
-        expect(result.params.b).toBeFalsy();
+        expect(result.params.has('b')).toEqual(true);
+        expect(result.params.get('b')).toBeFalsy();
+      });
+
+      test('returns optional catch all by globbing', () => {
+        const tree = new RadixTree();
+        tree.add('/a*b', 'a/b');
+
+        const result = tree.find('/a');
+        expect(result.found).toEqual(true);
+        expect(result.key).toEqual('/a*b');
+        expect(result.params.has('b')).toEqual(true);
+        expect(result.params.get('a')).toBeFalsy();
+      });
+
+      test('fails to match catch call when not in full match', () => {
+        const tree = new RadixTree();
+        tree.add('/', 'root');
+        tree.add('/a/b/*c', 'a/b/*c');
+
+        const result = tree.find('/a');
+        expect(result.found).toEqual(false);
+      });
+
+      test('prefers specific match over catch all', () => {
+        const tree = new RadixTree();
+        tree.add('/a', 'a');
+        tree.add('/a*b', 'a*b');
+
+        const result = tree.find('/a');
+        expect(result.found).toEqual(true);
+        expect(result.key).toEqual('/a');
+      });
+
+      test('prefers catch all over specific key with partial shared key', () => {
+        const tree = new RadixTree();
+        tree.add('/a/*b', 'a/*b');
+        tree.add('/a/c', 'a/c');
+
+        const result = tree.find('/a/d');
+        expect(result.found).toEqual(true);
+        expect(result.key).toEqual('/a/*b');
+        expect(result.params.has('b')).toEqual(true);
+        expect(result.params.get('b')).toEqual('d');
+      });
+    });
+
+    describe('dealing with named', () => {
+      test('matches correct path', () => {
+        const tree = new RadixTree();
+        tree.add('/', 'root');
+        tree.add('/a', 'a');
+        tree.add('/a/:b', 'a/:b');
+        tree.add('/a/:b/c', 'a/:b/c');
+
+        const result = tree.find('/a/s');
+        expect(result.found).toEqual(true);
+        expect(result.key).toEqual('/a/:b');
+        expect(result.payload).toEqual('a/:b');
+      });
+
+      test('match fails on partial path', () => {
+        const tree = new RadixTree();
+        tree.add('/', 'root');
+        tree.add('/a', 'a');
+        tree.add('/a/:b/c', 'a/:b/c');
+
+        const result = tree.find('/a/s');
+        expect(result.found).toEqual(false);
+      });
+
+      test('returns named parameters in result', () => {
+        const tree = new RadixTree();
+        tree.add('/', 'root');
+        tree.add('/a', 'a');
+        tree.add('/a/:b', 'a/:b');
+        tree.add('/a/:b/c', 'a/:b/c');
+
+        const result = tree.find('/a/s');
+        expect(result.found).toEqual(true);
+        expect(result.params.has('b')).toEqual(true);
+        expect(result.params.get('b')).toEqual('s');
+      });
+
+      test('returns unicode values', () => {
+        const tree = new RadixTree();
+        tree.add('/', 'root');
+        tree.add('/a/:b', 'a/:b');
+        tree.add('/a/:b/c', 'a/:b/c');
+
+        const result = tree.find('a/こんにちは');
+        expect(result.found).toEqual(true);
+        expect(result.params.has('b')).toEqual(true);
+        expect(result.params.get('b')).toEqual('こんにちは');
+      });
+
+      test('prefers named parameter over specific key with partially shared key', () => {
+        const tree = new RadixTree();
+        tree.add('/', 'root');
+        tree.add('/a/:b', 'a/:b');
+        tree.add('/a/c', 'a/c');
+
+        const result = tree.find('/a/d');
+        expect(result.found).toEqual(true);
+        expect(result.key).toEqual('/a/:b');
+        expect(result.params.has('b')).toEqual(true);
+        expect(result.params.get('b')).toEqual('d');
+      });
+    });
+
+    describe('dealing with multiple named', () => {
+      test('finds matching path', () => {
+        const tree = new RadixTree();
+        tree.add('/', 'root');
+        tree.add('/:a/:b', ':a/:b');
+
+        const result = tree.find('/c/d');
+        expect(result.found).toEqual(true);
+        expect(result.key).toEqual('/:a/:b');
+        expect(result.payload).toEqual(':a/:b');
+      });
+
+      test('returns named parameters', () => {
+        const tree = new RadixTree();
+        tree.add('/', 'root');
+        tree.add('/:a/:b', ':a/:b');
+
+        const result = tree.find('/c/d');
+        expect(result.found).toEqual(true);
+        expect(result.params.has('a')).toEqual(true);
+        expect(result.params.get('a')).toEqual('c');
+        expect(result.params.has('b')).toEqual(true);
+        expect(result.params.get('b')).toEqual('d');
+      });
+    });
+
+    describe('dealing with both glob and named parameters', () => {
+      test('matches specific path over glob parameter of the same level', () => {
+        const tree = new RadixTree();
+        tree.add('/', 'root');
+        tree.add('/*a', 'all');
+        tree.add('/b/:c', '/b/:c');
+
+        const result = tree.find('/b/d');
+        expect(result.found).toEqual(true);
+        expect(result.key).toEqual('/b/:c');
+        expect(result.payload).toEqual('/b/:c');
       });
     });
   });
