@@ -194,7 +194,10 @@ function innerFind<T>(
   ) {
     switch (kr.current) {
       case '*':
-        result.params[node.key.slice(kr.pos + 1)] = path.slice(pr.pos);
+        result.params.set(
+          node.key.slice(kr.pos + 1),
+          path.slice(pr.pos),
+        );
         result.use(node);
 
         return;
@@ -202,11 +205,10 @@ function innerFind<T>(
         const keySize = detectParamSize(kr);
         const pathSize = detectParamSize(pr);
 
-        const keyPos = kr.pos + 1;
-        const name = node.key.slice(keyPos, keyPos + keySize - 1);
-        const value = path.slice(pr.pos, pr.pos + pathSize);
-
-        result.params[name] = value;
+        result.params.set(
+          node.key.slice(kr.pos + 1, kr.pos + keySize),
+          path.slice(pr.pos, pr.pos + pathSize),
+        );
 
         kr.pos += keySize;
         pr.pos += pathSize;
@@ -261,7 +263,7 @@ function innerFind<T>(
         kr.next();
       }
 
-      result.params[node.key.slice(kr.pos + 1)] = '';
+      result.params.set(node.key.slice(kr.pos + 1), '');
 
       result.use(node);
 
